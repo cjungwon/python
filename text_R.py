@@ -1,21 +1,38 @@
 import json
 
-with open('./id_R.json', 'r') as f:
-  json_data = json.load(f)
-# print(json.dumps(json_data))
+def find_text_R(json_file):
 
+  with open(json_file, 'r') as f:
+    json_data_R = json.load(f)
+    # print(json.dumps(json_data))
 
-resArray = json_data.get('images')
-for list in resArray:
+  # text index 찾기
+  date_index = []
+  res_array = json_data_R.get('images')
+
+  for list in res_array:
     list_set = list.get('fields')
-    # print(list_set)
+
+    for n in range(len(list_set)):
+      if '주민등록증' in list_set[n].get('inferText'):
+        name_index = n + 1
+        # print(name_index)
+      
+      if '-' in list_set[n].get('inferText'):
+        id_num_index = n
+        # print(id_num_index)
+      
+      if '.' in list_set[n].get('inferText'):
+        date_index.append(n)
 
 
+  name = list_set[name_index].get('inferText').replace("(", "").replace(")", "") + list_set[name_index + 1].get('inferText')
+  id_num = list_set[id_num_index].get('inferText')
+  date = list_set[date_index[0]].get('inferText') + list_set[date_index[1]].get('inferText') + list_set[date_index[2]].get('inferText')
 
-name = list_set[1].get('inferText').replace("(", "").replace(")", "") + list_set[2].get('inferText')
+  print(" 이름 :", name, "\n", "주민등록번호 : ", id_num, "\n", "발행일 : ", date)
 
-id_num = list_set[3].get('inferText')
 
-date = list_set[11].get('inferText') + list_set[12].get('inferText') + list_set[13].get('inferText')
-
-print(" 이름 :", name, "\n", "주민등록번호 : ", id_num, "\n", "발행일 : ", date)     
+json_file = input("json file : ")
+  # D:/test/id_R.json
+find_text_R(json_file)
