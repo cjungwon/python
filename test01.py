@@ -2,7 +2,7 @@ import json
 import base64
 import requests
 
-with open("./sample.png", "rb") as f:
+with open("D:/test/movie.png", "rb") as f:
     img = base64.b64encode(f.read())
 
 URL = "https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general"

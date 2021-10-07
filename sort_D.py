@@ -43,7 +43,7 @@ def send_request_and_save(image_file, clova_URL, clova_secret_key):
   # print(result)
 
   # json 파일 저장
-  file_path = 'D:/test/id_R.json'
+  file_path = 'D:/test/Mobile_D.json'
   
   with open(file_path, 'w') as f:
     json.dump(result, f)
@@ -88,5 +88,5 @@ send_request_and_save(image_file, clova_URL, clova_secret_key)
 
 
 json_file = input("json file : ")
-  # D:/test/id_D.json
+  # D:/test/Mobile_D.json
 open_file_and_sort(json_file)

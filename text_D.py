@@ -10,7 +10,7 @@ Return     : text data(면허증번호, 이름, 주민등록번호, 발행일)
 '''
 
 def find_text_D(json_file):
-
+  
   with open(json_file, 'r') as f:
     json_data_D = json.load(f)
     # print(json.dumps(json_data))
@@ -43,5 +43,5 @@ def find_text_D(json_file):
 
 
 json_file = input("json file : ")
-  # D:/test/id_D.json
+  # D:/test/Mobile_D.json
 find_text_D(json_file)

@@ -45,5 +45,5 @@ def find_text_R(json_file):
 
 
 json_file = input("json file : ")
-  # D:/test/id_R.json
+  # D:/test/Mobile_R.json
 find_text_R(json_file)
