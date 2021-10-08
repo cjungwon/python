@@ -23,6 +23,8 @@ def show_image(json_file, image_file):
         if '.' in list_set[n].get('inferText'):
             date_index.append(n)
 
+    sort_bounding1 = list_set[name_index-1].get('boundingPoly').get('vertices')[0]
+    sort_bounding2 = list_set[name_index-1].get('boundingPoly').get('vertices')[2]
 
     name_bounding1 = list_set[name_index].get('boundingPoly').get('vertices')[0]
     name_bounding2 = list_set[name_index + 1].get('boundingPoly').get('vertices')[2]
@@ -30,11 +32,20 @@ def show_image(json_file, image_file):
     id_num_bounding1 = list_set[id_num_index].get('boundingPoly').get('vertices')[0]
     id_num_bounding2 = list_set[id_num_index].get('boundingPoly').get('vertices')[2]
 
+    address_bounding1 = list_set[id_num_index+1].get('boundingPoly').get('vertices')[0]
+    address_bounding2 = list_set[date_index[0]-1].get('boundingPoly').get('vertices')[2]
+
     date_bounding1 = list_set[date_index[0]].get('boundingPoly').get('vertices')[0]
     date_bounding2 = list_set[date_index[2]].get('boundingPoly').get('vertices')[2]
 
 
     img = cv2.imread(image_file, cv2.IMREAD_COLOR)
+
+    cv2.rectangle(img, (int(sort_bounding1.get('x')), int(sort_bounding1.get('y'))),
+                    (int(sort_bounding2.get('x')), int(sort_bounding2.get('y'))), (255, 0, 0), 2)
+
+    cv2.rectangle(img, (int(address_bounding1.get('x')), int(address_bounding1.get('y'))),
+                    (int(address_bounding2.get('x'))+40, int(address_bounding2.get('y'))), (255, 0, 0), 2)
 
     # name
     cv2.rectangle(img, (int(name_bounding1.get('x')), int(name_bounding1.get('y'))),

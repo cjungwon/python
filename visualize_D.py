@@ -6,11 +6,11 @@ import json
 def show_image(json_file, image_file):
 
   with open(json_file, 'r') as f:
-    json_data_D = json.load(f)
+    json_data = json.load(f)
 
   bar_index = []
   dot_index = []
-  res_array = json_data_D.get('images')
+  res_array = json_data.get('images')
 
   for list in res_array:
     list_set = list.get('fields')

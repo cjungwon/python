@@ -4,6 +4,8 @@ import base64
 import requests
 import cv2
 
+_clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
+_clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
 
 '''
 Name       : send_request_and_save()
@@ -24,9 +26,6 @@ def send_request_and_save(directory):
         if 'jpg' in file_list[n]:
             image_file_list.append(file_list[n])
 
-    clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
-    clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
-
     # 이미지 파일 clova로 보내서 데이터 받기
     for n in range(len(image_file_list)):
         file_slice = slice(image_file_list[n].find(".")+1, image_file_list[n].find(".")+5)
@@ -37,37 +36,53 @@ def send_request_and_save(directory):
         
         headers = {
             "Content-Type" : "application/json",
-            "X-OCR-SECRET" : clova_secret_key
+            "X-OCR-SECRET" : _clova_secret_key
             }
         data = {
             "version" : "V2",
             "requestId" : "sample_id",
             "timestamp" : 0,
             "images" : [
-                {
-                    "name" : "sample_image",
-                    "format" : image_format,
-                    "data" : img.decode('utf-8')
-                    }
+                        {
+                            "name" : "sample_image",
+                            "format" : image_format,
+                            "data" : img.decode('utf-8')
+                        }
                     ]
-                    }
+            }
                     
         data = json.dumps(data)
-        response = requests.post(clova_URL, data=data, headers=headers)
+        response = requests.post(_clova_URL, data=data, headers=headers)
         result = json.loads(response.text)
         
         # json 파일 저장
         file_path = 'D:/test/' + image_file_list[n][0:8] + '.json'
         
-        with open(file_path, 'w') as f:
+        with open(file_path, 'b') as f:                       # wb로 하면 TypeError: a bytes-like object is required, not 'str'
             json.dump(result, f)
 
 
+'''
+Name       : make_file_list()
+Desc       : 폴더 내 원하는 종류의 파일들의 list 생성
+Parameter  : directory, file_type
+Return     : file_list
+----------------------------------------
+2021.10.08    최정원
+'''
+
+def make_file_list(directory, file_type):
+    files = os.listdir(directory)
+    file_list = []
+
+    for n in range(len(files)):
+        if file_type in files[n]:
+            file_list.append(files[n])
 
 
 '''
 Name       : open_file_and_sort_idcard()
-Desc       : 폴더 내 json 파일 호출하여 신분증 종류 판별 후, 필요한 데이터 추출
+Desc       : 폴더 내 json 파일 호출하여 신분증  종류 판별 후, 필요한 데이터 추출
 Parameter  : directory
 Return     : 신분증 종류(면허증, 주민등록증), 필요한 데이터(면허번호, 이름, 주민번호, 발행일)
 ----------------------------------------
@@ -75,6 +90,7 @@ Return     : 신분증 종류(면허증, 주민등록증), 필요한 데이터(�
 '''
 
 def open_file_and_sort_idcard(directory):
+
 
     # 폴더 내 json파일 찾기
     file_list = os.listdir(directory)
@@ -94,58 +110,51 @@ def open_file_and_sort_idcard(directory):
         for list in res_array:
             list_set = list.get('fields')
         
-            for list_s in list_set:
-                text = list_s.get('inferText')
+        for list_s in list_set:
+            text = list_s.get('inferText')
 
-                # 면허증
-                if '자동차운전면허증' in text:
-                    print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 면허증')
+            # 면허증
+            if '자동차운전면허증' in text:
+                print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 면허증')
 
-                    bar_index = []
-                    dot_index = []
-                    res_array = json_data.get('images')
+                bar_index = []
+                dot_index = []
+
+                for n in range(len(list_set)):
+                    if '-' in list_set[n].get('inferText'):
+                        bar_index.append(n)
+                    elif '.' in list_set[n].get('inferText'):
+                        dot_index.append(n)
+
+                license_num = list_set[bar_index[0]].get('inferText')
+                name = list_set[bar_index[0] + 1].get('inferText')
+                id_num = list_set[bar_index[1]].get('inferText') + list_set[bar_index[1] + 1].get('inferText')
+                date = list_set[dot_index[len(dot_index) - 2]].get('inferText') + list_set[dot_index[len(dot_index) - 1]].get('inferText')
             
-                    for list in res_array:
-                        list_set = list.get('fields')
-
-                    for n in range(len(list_set)):
-                        if '-' in list_set[n].get('inferText'):
-                            bar_index.append(n)
-                        elif '.' in list_set[n].get('inferText'):
-                            dot_index.append(n)
-
-                    license_num = list_set[bar_index[0]].get('inferText')
-                    name = list_set[bar_index[0] + 1].get('inferText')
-                    id_num = list_set[bar_index[1]].get('inferText') + list_set[bar_index[1] + 1].get('inferText')
-                    date = list_set[dot_index[len(dot_index) - 2]].get('inferText') + list_set[dot_index[len(dot_index) - 1]].get('inferText')
-            
-                    print(" 면허증번호 :", license_num, "\n", "이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
+                print(" 면허증번호 :", license_num, "\n", "이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
 
 
-                # 주민등록증
-                elif '주민등록증' in text:
-                    print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 주민등록증')
+            # 주민등록증
+            elif '주민등록증' in text:
+                print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 주민등록증')
 
-                    date_index = []
-                    res_array = json_data.get('images')
-
-                    for list in res_array:
-                        list_set = list.get('fields')
-                    for n in range(len(list_set)):
-                        if '주민등록증' in list_set[n].get('inferText'):
-                            name_index = n + 1
-                        
-                        elif '-' in list_set[n].get('inferText'):
-                            id_num_index = n
-                        
-                        elif '.' in list_set[n].get('inferText'):
-                            date_index.append(n)
-
-                    name = list_set[name_index].get('inferText').replace("(", "").replace(")", "") + list_set[name_index + 1].get('inferText')
-                    id_num = list_set[id_num_index].get('inferText')
-                    date = list_set[date_index[0]].get('inferText') + list_set[date_index[1]].get('inferText') + list_set[date_index[2]].get('inferText')
+                date_index = []
                 
-                    print(" 이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
+                for n in range(len(list_set)):
+                    if '주민등록증' in list_set[n].get('inferText'):
+                        name_index = n + 1
+                        
+                    elif '-' in list_set[n].get('inferText'):
+                        id_num_index = n
+                        
+                    elif '.' in list_set[n].get('inferText'):
+                        date_index.append(n)
+
+                name = list_set[name_index].get('inferText').replace("(", "").replace(")", "") + list_set[name_index + 1].get('inferText')
+                id_num = list_set[id_num_index].get('inferText')
+                date = list_set[date_index[0]].get('inferText') + list_set[date_index[1]].get('inferText') + list_set[date_index[2]].get('inferText')
+                
+                print(" 이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
 
 
 
@@ -186,7 +195,11 @@ def show_idcard_image(directory):
 
                 bar_index = []
                 dot_index = []
-
+                res_array = json_data.get('images')
+                
+                for list in res_array:
+                    list_set = list.get('fields')
+                
                 for n in range(len(list_set)):
                     if '-' in list_set[n].get('inferText'):
                         bar_index.append(n)
@@ -276,5 +289,5 @@ directory = input("folder : ")
 
 send_request_and_save(directory)
 open_file_and_sort_idcard(directory)
-show_idcard_image(directory)
+# show_idcard_image(directory)
 
