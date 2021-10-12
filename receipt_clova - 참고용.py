@@ -487,4 +487,3 @@ screen = Window()
 screen.show()
 sys.exit(app.exec_())
 
-

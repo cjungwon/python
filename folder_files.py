@@ -144,30 +144,22 @@ def open_file_and_sort_idcard(directory):
                 bar_index = []
                 dot_index = []
 
-                for n in range(len(list_fields)):
-                    if '-' in list_fields[n].get('inferText'):
-                        bar_index.append(n)
-                    elif '.' in list_fields[n].get('inferText'):
-                        dot_index.append(n)
+                for m in range(len(list_fields)):
+                    if '-' in list_fields[m].get('inferText'):
+                        bar_index.append(m)
+                    elif '.' in list_fields[m].get('inferText'):
+                        dot_index.append(m)
 
-                print(list_fields[dot_index[len(dot_index)-1]].get('inferText'))
-            
-
-
-                # name = list_fields[bar_index[0] + 1].get('inferText')
-
-                id_num_list = re.findall("\d+", list_fields[bar_index[1]].get('inferText'))
-                id_num = id_num_list[0] + '-' + id_num_list[1]
-             
-                # issue_date = list_fields[dot_index[len(dot_index) - 2]].get('inferText') + list_fields[dot_index[len(dot_index) - 1]].get('inferText')
-
+                name = list_fields[bar_index[0] + 1].get('inferText')
+                id_num = list_fields[bar_index[1]].get('inferText') + list_fields[bar_index[1] + 1].get('inferText')
+                issue_date = list_fields[dot_index[len(dot_index) - 2]].get('inferText') + list_fields[dot_index[len(dot_index) - 1]].get('inferText')
                 license_num = list_fields[bar_index[0]].get('inferText')
 
-                # # CSV 파일로 저장
-                # Mobile_D_data = [name, id_num, issue_date, license_num]
-                # print(Mobile_D_data)
+                # CSV 파일로 저장
+                Mobile_D_data = [name, id_num, issue_date, license_num]
+                print(Mobile_D_data)
 
-                # save_csv_file(directory, json_file_list, Mobile_D_data, n)
+                save_csv_file(directory, json_file_list, Mobile_D_data, n)
 
             # 주민등록증
             elif '주민등록증' in text:
@@ -175,22 +167,22 @@ def open_file_and_sort_idcard(directory):
 
                 dot_index = []
                
-                for n in range(len(list_fields)):
+                for m in range(len(list_fields)):
                         
-                    if '-' in list_fields[n].get('inferText'):
-                        bar_index = n
-                    elif '.' in list_fields[n].get('inferText'):
-                        dot_index.append(n)
+                    if '-' in list_fields[m].get('inferText'):
+                        bar_index = m
+                    elif '.' in list_fields[m].get('inferText'):
+                        dot_index.append(m)
 
-                # name = list_fields[bar_index - 2].get('inferText').replace("(", "").replace(")", "") + list_fields[bar_index - 1].get('inferText')
-                # id_num = list_fields[bar_index].get('inferText')
-                # issue_date = list_fields[dot_index[0]].get('inferText') + list_fields[dot_index[1]].get('inferText') + list_fields[dot_index[2]].get('inferText')
+                name = list_fields[bar_index - 2].get('inferText').replace("(", "").replace(")", "") + list_fields[bar_index - 1].get('inferText')
+                id_num = list_fields[bar_index].get('inferText')
+                issue_date = list_fields[dot_index[0]].get('inferText') + list_fields[dot_index[1]].get('inferText') + list_fields[dot_index[2]].get('inferText')
                 
-                # # CSV 파일로 저장
-                # Mobile_R_data = [name, id_num, issue_date, ]
-                # print(Mobile_R_data)
+                # CSV 파일로 저장
+                Mobile_R_data = [name, id_num, issue_date, ]
+                print(Mobile_R_data)
 
-                # save_csv_file(directory, json_file_list, Mobile_R_data, n)
+                save_csv_file(directory, json_file_list, Mobile_R_data, n)
 
 
 
@@ -238,7 +230,7 @@ def show_idcard_every_data(directory):
                 cv2.imshow('Mobile_D', img)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
-                # cv2.imwrite('D:/test/Mobile_D__sample_every_data.jpg', img)
+                cv2.imwrite('D:/test/Mobile_D__sample_every_data.jpg', img)
             
             # 주민등록증
             elif '주민등록증' in text:
@@ -257,7 +249,7 @@ def show_idcard_every_data(directory):
                 cv2.imshow('Mobile_R', img)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
-                # cv2.imwrite('D:/test/Mobile_R__sample_every_data.jpg', img)
+                cv2.imwrite('D:/test/Mobile_R__sample_every_data.jpg', img)
 
 
 '''
@@ -317,16 +309,16 @@ def show_idcard_main_data(directory):
 
                 # license_num
                 cv2.rectangle(img, (int(lecense_num_bounding1.get('x')), int(lecense_num_bounding1.get('y'))),
-                    (int(lecense_num_bounding2.get('x')), int(lecense_num_bounding2.get('y'))), (0, 0, 255), 2)
+                    (int(lecense_num_bounding2.get('x')), int(lecense_num_bounding2.get('y'))), (0, 0, 255), 3)
                 # name
                 cv2.rectangle(img, (int(name_bounding1.get('x')), int(name_bounding1.get('y'))),
-                   (int(name_bounding2.get('x')), int(name_bounding2.get('y'))), (0, 0, 255), 2)
+                   (int(name_bounding2.get('x')), int(name_bounding2.get('y'))), (0, 0, 255), 3)
                 # id_num
                 cv2.rectangle(img, (int(id_num_bounding1.get('x')), int(id_num_bounding1.get('y'))),
-                   (int(id_num_bounding2.get('x')), int(id_num_bounding2.get('y'))), (0, 0, 255), 2)
+                   (int(id_num_bounding2.get('x')), int(id_num_bounding2.get('y'))), (0, 0, 255), 3)
                 # date
                 cv2.rectangle(img, (int(date_bounding1.get('x')), int(date_bounding1.get('y'))),
-                   (int(date_bounding2.get('x')), int(date_bounding2.get('y'))), (0, 0, 255), 2)
+                   (int(date_bounding2.get('x')), int(date_bounding2.get('y'))), (0, 0, 255), 3)
 
                 cv2.namedWindow('Mobile_D', cv2.WINDOW_NORMAL)
                 cv2.imshow('Mobile_D', img)
@@ -361,13 +353,13 @@ def show_idcard_main_data(directory):
 
                 # name
                 cv2.rectangle(img, (int(name_bounding1.get('x')), int(name_bounding1.get('y'))),
-                    (int(name_bounding2.get('x')), int(name_bounding2.get('y'))), (0, 0, 255), 2)
+                    (int(name_bounding2.get('x')), int(name_bounding2.get('y'))), (0, 0, 255), 3)
                 # id_num
                 cv2.rectangle(img, (int(id_num_bounding1.get('x')), int(id_num_bounding1.get('y'))),
-                    (int(id_num_bounding2.get('x')), int(id_num_bounding2.get('y'))), (0, 0, 255), 2)
+                    (int(id_num_bounding2.get('x')), int(id_num_bounding2.get('y'))), (0, 0, 255), 3)
                 # date
                 cv2.rectangle(img, (int(date_bounding1.get('x')), int(date_bounding1.get('y'))),
-                   (int(date_bounding2.get('x')), int(date_bounding2.get('y'))), (0, 0, 255), 2)
+                   (int(date_bounding2.get('x')), int(date_bounding2.get('y'))), (0, 0, 255), 3)
 
                 cv2.namedWindow('Mobile_R', cv2.WINDOW_NORMAL)
                 cv2.imshow('Mobile_R', img)
@@ -381,6 +373,6 @@ directory = input("folder : ")
     # D:/test
 
 # send_request_and_save(directory)
-open_file_and_sort_idcard(directory)
-# show_idcard_every_data(directory)
-# show_idcard_main_data(directory)
+# open_file_and_sort_idcard(directory)
+show_idcard_every_data(directory)
+show_idcard_main_data(directory)
