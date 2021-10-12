@@ -3,9 +3,62 @@ import json
 import base64
 import requests
 import cv2
+import csv
+import re
 
 _clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
 _clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
+
+'''
+Name       : make_file_list()
+Desc       : 폴더 내 원하는 종류의 파일들의 list 생성
+Parameter  : directory, file_type
+Return     : file_list
+----------------------------------------
+2021.10.08    최정원
+'''
+
+def make_file_list(directory, file_type):
+    files = os.listdir(directory)
+    file_list = []
+
+    for n in range(len(files)):
+        if file_type in files[n]:
+            file_list.append(files[n])
+    
+    return file_list
+
+'''
+Name       : save_csv_file()
+Desc       : result_list 를 csv 파일로 저장
+Parameter  : file_path, result_list
+Return     : 파일 저장
+----------------------------------------
+2021.10.12    최정원
+'''
+
+def save_csv_file(directory, json_file_list, result_list, n):
+    file_path = directory + '/' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + '.csv'
+
+    with open(file_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(result_list)
+
+'''
+Name       : save_json_file()
+Desc       : result_data 를 json 파일로 저장
+Parameter  : directory, image_file_list, result_data, n
+Return     : 파일 저장
+----------------------------------------
+2021.10.12    최정원
+'''
+
+def save_json_file(directory, image_file_list, result_data,n):
+    file_path = directory + '/' + image_file_list[n][slice(0, image_file_list[n].rfind("."))] + '.json'
+        
+    with open(file_path, 'w') as f:
+        json.dump(result_data, f)
+
 
 '''
 Name       : send_request_and_save()
@@ -19,19 +72,15 @@ Return     : 파일 저장
 def send_request_and_save(directory):
 
     # 폴더 내 이미지 파일 찾기
-    file_list = os.listdir(directory)
-
-    image_file_list = []
-    for n in range(len(file_list)):
-        if 'jpg' in file_list[n]:
-            image_file_list.append(file_list[n])
+    image_file_list = make_file_list(directory, 'jpg')
 
     # 이미지 파일 clova로 보내서 데이터 받기
     for n in range(len(image_file_list)):
-        file_slice = slice(image_file_list[n].find(".")+1, image_file_list[n].find(".")+5)
+        file_slice = slice(image_file_list[n].rfind(".")+1, image_file_list[n].rfind(".")+5)
         image_format = image_file_list[n][file_slice]
-        
-        with open(image_file_list[n], "rb") as f:
+
+        image_file = directory + '/' + image_file_list[n]
+        with open(image_file, "rb") as f:
             img = base64.b64encode(f.read())
         
         headers = {
@@ -56,28 +105,7 @@ def send_request_and_save(directory):
         result = json.loads(response.text)
         
         # json 파일 저장
-        file_path = 'D:/test/' + image_file_list[n][0:8] + '.json'
-        
-        with open(file_path, 'b') as f:                       # wb로 하면 TypeError: a bytes-like object is required, not 'str'
-            json.dump(result, f)
-
-
-'''
-Name       : make_file_list()
-Desc       : 폴더 내 원하는 종류의 파일들의 list 생성
-Parameter  : directory, file_type
-Return     : file_list
-----------------------------------------
-2021.10.08    최정원
-'''
-
-def make_file_list(directory, file_type):
-    files = os.listdir(directory)
-    file_list = []
-
-    for n in range(len(files)):
-        if file_type in files[n]:
-            file_list.append(files[n])
+        save_json_file(directory, image_file_list, result, n)
 
 
 '''
@@ -91,75 +119,149 @@ Return     : 신분증 종류(면허증, 주민등록증), 필요한 데이터(�
 
 def open_file_and_sort_idcard(directory):
 
-
     # 폴더 내 json파일 찾기
-    file_list = os.listdir(directory)
-    json_file_list = []
-
-    for n in range(len(file_list)):
-        if 'json' in file_list[n]:
-            json_file_list.append(file_list[n])
+    json_file_list = make_file_list(directory, 'json')
 
     # json 파일 호출하여 신분증 종류 판별
     for n in range(len(json_file_list)):
-        with open(json_file_list[n], 'r') as f:
-            json_data = json.load(f)
-            # print(json.dumps(json_data))
 
-        res_array = json_data.get('images')
-        for list in res_array:
-            list_set = list.get('fields')
+        json_file = directory + '/' + json_file_list[n]
+        with open(json_file, 'r') as f:
+            json_data = json.load(f)
+
+        list_images = json_data.get('images')
+        for list in list_images:
+            list_fields = list.get('fields')
         
-        for list_s in list_set:
+        for list_s in list_fields:
             text = list_s.get('inferText')
+
 
             # 면허증
             if '자동차운전면허증' in text:
-                print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 면허증')
+                # print('\n' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + ' : 면허증')
 
                 bar_index = []
                 dot_index = []
 
-                for n in range(len(list_set)):
-                    if '-' in list_set[n].get('inferText'):
+                for n in range(len(list_fields)):
+                    if '-' in list_fields[n].get('inferText'):
                         bar_index.append(n)
-                    elif '.' in list_set[n].get('inferText'):
+                    elif '.' in list_fields[n].get('inferText'):
                         dot_index.append(n)
 
-                license_num = list_set[bar_index[0]].get('inferText')
-                name = list_set[bar_index[0] + 1].get('inferText')
-                id_num = list_set[bar_index[1]].get('inferText') + list_set[bar_index[1] + 1].get('inferText')
-                date = list_set[dot_index[len(dot_index) - 2]].get('inferText') + list_set[dot_index[len(dot_index) - 1]].get('inferText')
+                print(list_fields[dot_index[len(dot_index)-1]].get('inferText'))
             
-                print(" 면허증번호 :", license_num, "\n", "이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
 
+
+                # name = list_fields[bar_index[0] + 1].get('inferText')
+
+                id_num_list = re.findall("\d+", list_fields[bar_index[1]].get('inferText'))
+                id_num = id_num_list[0] + '-' + id_num_list[1]
+             
+                # issue_date = list_fields[dot_index[len(dot_index) - 2]].get('inferText') + list_fields[dot_index[len(dot_index) - 1]].get('inferText')
+
+                license_num = list_fields[bar_index[0]].get('inferText')
+
+                # # CSV 파일로 저장
+                # Mobile_D_data = [name, id_num, issue_date, license_num]
+                # print(Mobile_D_data)
+
+                # save_csv_file(directory, json_file_list, Mobile_D_data, n)
 
             # 주민등록증
             elif '주민등록증' in text:
-                print('\n' + json_file_list[n][slice(0, json_file_list[n].find("."))] + ' : 주민등록증')
+                # print('\n' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + ' : 주민등록증')
 
-                date_index = []
-                
-                for n in range(len(list_set)):
-                    if '주민등록증' in list_set[n].get('inferText'):
-                        name_index = n + 1
+                dot_index = []
+               
+                for n in range(len(list_fields)):
                         
-                    elif '-' in list_set[n].get('inferText'):
-                        id_num_index = n
-                        
-                    elif '.' in list_set[n].get('inferText'):
-                        date_index.append(n)
+                    if '-' in list_fields[n].get('inferText'):
+                        bar_index = n
+                    elif '.' in list_fields[n].get('inferText'):
+                        dot_index.append(n)
 
-                name = list_set[name_index].get('inferText').replace("(", "").replace(")", "") + list_set[name_index + 1].get('inferText')
-                id_num = list_set[id_num_index].get('inferText')
-                date = list_set[date_index[0]].get('inferText') + list_set[date_index[1]].get('inferText') + list_set[date_index[2]].get('inferText')
+                # name = list_fields[bar_index - 2].get('inferText').replace("(", "").replace(")", "") + list_fields[bar_index - 1].get('inferText')
+                # id_num = list_fields[bar_index].get('inferText')
+                # issue_date = list_fields[dot_index[0]].get('inferText') + list_fields[dot_index[1]].get('inferText') + list_fields[dot_index[2]].get('inferText')
                 
-                print(" 이름 :", name, "\n", "주민등록번호 :", id_num, "\n", "발행일 :", date)
+                # # CSV 파일로 저장
+                # Mobile_R_data = [name, id_num, issue_date, ]
+                # print(Mobile_R_data)
+
+                # save_csv_file(directory, json_file_list, Mobile_R_data, n)
 
 
 
 '''
-Name       : show_idcard_image()
+Name       : show_idcard_every_data()
+Desc       : 폴더 내 json 파일 호출하여 신분증 종류 판별 후, 모든 데이터의 위치 시각화
+Parameter  : directory
+Return     : 이미지 파일
+----------------------------------------
+2021.10.12    최정원
+'''
+
+def show_idcard_every_data(directory):
+    # 폴더 내 json파일 찾기
+    json_file_list = make_file_list(directory, 'json')
+
+    # json 파일 호출하여 신분증 종류 판별
+    for n in range(len(json_file_list)):
+
+        json_file = directory + '/' + json_file_list[n]
+        with open(json_file, 'r') as f:
+            json_data = json.load(f)
+    
+        list_images = json_data.get('images')
+        for list in list_images:
+            list_fields = list.get('fields')
+        
+        for list_s in list_fields:
+            text = list_s.get('inferText')
+            
+            # 면허증
+            if '자동차운전면허증' in text:
+                
+                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + '.jpg'
+                img = cv2.imread(image_file, cv2.IMREAD_COLOR)
+
+                for n in range(len(list_fields)):
+                    bounding = list_fields[n].get('boundingPoly').get('vertices')
+                    cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[1].get('x')), int(bounding[1].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[1].get('x')), int(bounding[1].get('y'))), (int(bounding[2].get('x')), int(bounding[2].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[2].get('x')), int(bounding[2].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
+
+                cv2.namedWindow('Mobile_D', cv2.WINDOW_NORMAL)
+                cv2.imshow('Mobile_D', img)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+                # cv2.imwrite('D:/test/Mobile_D__sample_every_data.jpg', img)
+            
+            # 주민등록증
+            elif '주민등록증' in text:
+
+                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].find("."))] + '.jpg'
+                img = cv2.imread(image_file, cv2.IMREAD_COLOR)
+
+                for n in range(len(list_fields)):
+                    bounding = list_fields[n].get('boundingPoly').get('vertices')
+                    cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[1].get('x')), int(bounding[1].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[1].get('x')), int(bounding[1].get('y'))), (int(bounding[2].get('x')), int(bounding[2].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[2].get('x')), int(bounding[2].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
+                    cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
+                    
+                cv2.namedWindow('Mobile_R', cv2.WINDOW_NORMAL)
+                cv2.imshow('Mobile_R', img)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+                # cv2.imwrite('D:/test/Mobile_R__sample_every_data.jpg', img)
+
+
+'''
+Name       : show_idcard_main_data()
 Desc       : 폴더 내 json 파일 호출하여 신분증 종류 판별 후, 필요한 데이터의 위치 시각화
 Parameter  : directory
 Return     : 이미지 파일
@@ -167,56 +269,49 @@ Return     : 이미지 파일
 2021.10.08    최정원
 '''
 
-def show_idcard_image(directory):
+def show_idcard_main_data(directory):
     # 폴더 내 json파일 찾기
-    file_list = os.listdir(directory)
-
-    json_file_list = []
-    for n in range(len(file_list)):
-        if 'json' in file_list[n]:
-            json_file_list.append(file_list[n])
+    json_file_list = make_file_list(directory, 'json')
 
     # json 파일 호출하여 신분증 종류 판별
     for n in range(len(json_file_list)):
-        with open(json_file_list[n], 'r') as f:
+
+        json_file = directory + '/' + json_file_list[n]
+        with open(json_file, 'r') as f:
             json_data = json.load(f)
     
-        res_array = json_data.get('images')
-        for list in res_array:
-            list_set = list.get('fields')
+        list_images = json_data.get('images')
+        for list in list_images:
+            list_fields = list.get('fields')
         
-        for list_s in list_set:
+        for list_s in list_fields:
             text = list_s.get('inferText')
             
             # 면허증
             if '자동차운전면허증' in text:
                 
-                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].find("s")-2)] + '__sample.jpg'
+                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + '.jpg'
 
                 bar_index = []
                 dot_index = []
-                res_array = json_data.get('images')
                 
-                for list in res_array:
-                    list_set = list.get('fields')
-                
-                for n in range(len(list_set)):
-                    if '-' in list_set[n].get('inferText'):
+                for n in range(len(list_fields)):
+                    if '-' in list_fields[n].get('inferText'):
                         bar_index.append(n)
-                    elif '.' in list_set[n].get('inferText'):
+                    elif '.' in list_fields[n].get('inferText'):
                         dot_index.append(n)
 
-                lecense_num_bounding1 = list_set[bar_index[0]].get('boundingPoly').get('vertices')[0]
-                lecense_num_bounding2 = list_set[bar_index[0]].get('boundingPoly').get('vertices')[2]
+                lecense_num_bounding1 = list_fields[bar_index[0]].get('boundingPoly').get('vertices')[0]
+                lecense_num_bounding2 = list_fields[bar_index[0]].get('boundingPoly').get('vertices')[2]
 
-                name_bounding1 = list_set[bar_index[0] + 1].get('boundingPoly').get('vertices')[0]
-                name_bounding2 = list_set[bar_index[0] + 1].get('boundingPoly').get('vertices')[2]
+                name_bounding1 = list_fields[bar_index[0] + 1].get('boundingPoly').get('vertices')[0]
+                name_bounding2 = list_fields[bar_index[0] + 1].get('boundingPoly').get('vertices')[2]
 
-                id_num_bounding1 = list_set[bar_index[1]].get('boundingPoly').get('vertices')[0]
-                id_num_bounding2 = list_set[bar_index[1] + 1].get('boundingPoly').get('vertices')[2]
+                id_num_bounding1 = list_fields[bar_index[1]].get('boundingPoly').get('vertices')[0]
+                id_num_bounding2 = list_fields[bar_index[1] + 1].get('boundingPoly').get('vertices')[2]
 
-                date_bounding1 = list_set[dot_index[len(dot_index) - 2]].get('boundingPoly').get('vertices')[0]
-                date_bounding2 = list_set[dot_index[len(dot_index) - 1]].get('boundingPoly').get('vertices')[2]
+                date_bounding1 = list_fields[dot_index[len(dot_index) - 2]].get('boundingPoly').get('vertices')[0]
+                date_bounding2 = list_fields[dot_index[len(dot_index) - 1]].get('boundingPoly').get('vertices')[2]
 
                 img = cv2.imread(image_file, cv2.IMREAD_COLOR)
 
@@ -237,32 +332,30 @@ def show_idcard_image(directory):
                 cv2.imshow('Mobile_D', img)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
-                cv2.imwrite('D:/test/Mobile_D_result.jpg', img)
+                cv2.imwrite('D:/test/Mobile_D__sample_main_data.jpg', img)
             
 
             # 주민등록증
             elif '주민등록증' in text:
 
-                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].find("s")-2)] + '__sample.jpg'
+                image_file = directory + '/' + json_file_list[n][slice(0, json_file_list[n].rfind("."))] + '.jpg'
 
-                date_index = []
+                dot_index = []
 
-                for n in range(len(list_set)):
-                    if '주민등록증' in list_set[n].get('inferText'):
-                        name_index = n + 1
-                    elif '-' in list_set[n].get('inferText'):
-                        id_num_index = n
-                    elif '.' in list_set[n].get('inferText'):
-                        date_index.append(n)
+                for n in range(len(list_fields)):
+                    if '-' in list_fields[n].get('inferText'):
+                        bar_index = n
+                    elif '.' in list_fields[n].get('inferText'):
+                        dot_index.append(n)
 
-                name_bounding1 = list_set[name_index].get('boundingPoly').get('vertices')[0]
-                name_bounding2 = list_set[name_index + 1].get('boundingPoly').get('vertices')[2]
+                name_bounding1 = list_fields[bar_index - 2].get('boundingPoly').get('vertices')[0]
+                name_bounding2 = list_fields[bar_index - 1].get('boundingPoly').get('vertices')[2]
 
-                id_num_bounding1 = list_set[id_num_index].get('boundingPoly').get('vertices')[0]
-                id_num_bounding2 = list_set[id_num_index].get('boundingPoly').get('vertices')[2]
+                id_num_bounding1 = list_fields[bar_index].get('boundingPoly').get('vertices')[0]
+                id_num_bounding2 = list_fields[bar_index].get('boundingPoly').get('vertices')[2]
 
-                date_bounding1 = list_set[date_index[0]].get('boundingPoly').get('vertices')[0]
-                date_bounding2 = list_set[date_index[2]].get('boundingPoly').get('vertices')[2]
+                date_bounding1 = list_fields[dot_index[0]].get('boundingPoly').get('vertices')[0]
+                date_bounding2 = list_fields[dot_index[2]].get('boundingPoly').get('vertices')[2]
 
                 img = cv2.imread(image_file, cv2.IMREAD_COLOR)
 
@@ -280,14 +373,14 @@ def show_idcard_image(directory):
                 cv2.imshow('Mobile_R', img)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
-                cv2.imwrite('D:/test/Mobile_R_result.jpg', img)
+                cv2.imwrite('D:/test/Mobile_R__sample_main_data.jpg', img)
 
 
 
 directory = input("folder : ")
     # D:/test
 
-send_request_and_save(directory)
+# send_request_and_save(directory)
 open_file_and_sort_idcard(directory)
-# show_idcard_image(directory)
-
+# show_idcard_every_data(directory)
+# show_idcard_main_data(directory)
