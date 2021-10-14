@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 
 class FileInfo:
     def __init__(self, directory):
@@ -38,4 +37,5 @@ class FileInfo:
 # directory = 'd:/id_card'
 info = FileInfo('d:/id_card')
 
+# print(info.file_extension())
 print(info.merge())

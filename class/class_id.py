@@ -385,18 +385,9 @@ class ClovaRecog:
 
 
 
-    #directory = input("folder : ")
-        # D:/id_card
-
-
-    # print( make_file_list(directory, 'jpg') )
-    # send_request_and_save(directory)
-    # open_file_and_sort_idcard(directory)
-    # show_idcard_every_data(directory)
-    # show_idcard_main_data(directory)
 
 recog = ClovaRecog('d:/id_card')
 
 # print(recog.make_file_list('jpg'))
-print(recog.open_file_and_sort_idcard())
-# print(recog.show_idcard_every_data())
+# recog.open_file_and_sort_idcard()
+recog.show_idcard_every_data()
