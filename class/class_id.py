@@ -276,7 +276,7 @@ class ClovaRecog:
     ----------------------------------------
     2021.10.08    최정원
     '''
-
+ 
     def show_idcard_main_data(directory):
         # 폴더 내 json파일 찾기
         json_file_list = make_file_list(directory, 'json')
