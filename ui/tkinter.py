@@ -1,7 +1,5 @@
-from re import M
 import tkinter as tk
-from tkinter import Widget, ttk
-from tkinter.constants import NUMERIC
+from tkinter import ttk
 from tkinter import scrolledtext
 from tkinter import Menu
 

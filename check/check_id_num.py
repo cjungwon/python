@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+import string
 
 class IDcardUtil:
     def __init__(self) -> None:
@@ -51,7 +52,8 @@ class IDcardUtil:
 
     def check_date_format(self, input_num):
  
-        no_blank = input_num.replace(" ", "") # 공백 제거
+        # no_blank = input_num.replace(" ", "") # 공백 제거
+        no_blank = ''.join(input_num.split()) # 공백, 탭, cr, lf 제거
         split_num = no_blank.replace('-', '.').split('.') # -, . 으로 split
         num_list = list(filter(None, split_num))
 
