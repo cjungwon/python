@@ -162,17 +162,28 @@ class ClovaRecog:
                 elif '주민등록증' in text:
                     bounding_R = []
                     y_range_R = []
+                    text_bound_R = {'text' : '', 'y_range' : ''}
+                    
+                    text_bound_R_text = []
+                    text_bound_R_y = []
+                    text_bound_R['text'] = text_bound_R_text
+                    text_bound_R['y_range'] = text_bound_R_y
                     
                     for m in range(len(list_fields)):
                         bounding_R.append(list_fields[m].get('boundingPoly').get('vertices'))
 
                         y_list = [bounding_R[m][0].get('y'), bounding_R[m][1].get('y'), bounding_R[m][2].get('y'), bounding_R[m][3].get('y')]
                         y_range_R.append([min(y_list), max(y_list)])
+                        
+                        text_bound_R_text.append(list_fields[m].get('inferText'))
+                        text_bound_R_y.append(y_range_R[m])
+                        
+                    # print(text_bound_R) 
+                    # print(text_bound_R['text'][0])
 
-                        text_bound_R = [list_fields[m].get('inferText'), y_range_R[m]]
-                        print(text_bound_R)  
-
-
+                    for i in range(len(text_bound_R['text'])):
+                        if '.' in text_bound_R['text'][i]:
+                            print(text_bound_R['y_range'][i])
                     
                     
                     

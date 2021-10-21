@@ -180,6 +180,7 @@ class ClovaRecog:
 
                     bar_index = []
                     dot_index = []
+                    jumin_index = []
                 
                     for m in range(len(list_fields)):
                             
@@ -188,9 +189,13 @@ class ClovaRecog:
                         elif '.' in list_fields[m].get('inferText'):
                             dot_index.append(m)
 
-                    # name = list_fields[bar_index[0] - 2].get('inferText').replace("(", "").replace(")", "") + list_fields[bar_index - 1].get('inferText')
+                    name = []
+                    for n in range(jumin_index[0]+1, bar_index[0]):
+                        name.append(list_fields[n].get('inferText').split('(')[0])
+                    name = ''.join(name)
+
                     id_num = list_fields[bar_index[0]].get('inferText')
-                    # issue_date = list_fields[dot_index[0]].get('inferText') + list_fields[dot_index[1]].get('inferText') + list_fields[dot_index[2]].get('inferText')
+                    issue_date = list_fields[dot_index[0]].get('inferText') + list_fields[dot_index[1]].get('inferText') + list_fields[dot_index[1]+1].get('inferText')
 
                     print(id_num)
                     
