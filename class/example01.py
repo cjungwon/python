@@ -1,4 +1,4 @@
-class Student:
+class StudentA:
     def __init__(self, name, korean, math, english, science):
         self.name = name
         self.korean = korean
@@ -34,16 +34,16 @@ class Student:
         
 
 students = [
-    Student("윤인성", 87, 98, 99, 95),
-    Student("연하진", 92, 98, 96, 98),
-    Student("구지연", 76, 96, 94, 90),
-    Student("나선주", 80, 88, 94, 91),
-    Student("윤아린", 85, 67, 72, 80),
-    Student("윤명월", 94, 79, 88, 83)
+    StudentA("윤인성", 87, 98, 99, 95),
+    StudentA("연하진", 92, 98, 96, 98),
+    StudentA("구지연", 76, 96, 94, 90),
+    StudentA("나선주", 80, 88, 94, 91),
+    StudentA("윤아린", 85, 67, 72, 80),
+    StudentA("윤명월", 94, 79, 88, 83)
 ]
 
-student_a = Student("윤인성", 87, 98, 99, 95),
-student_b = Student("연하진", 92, 98, 96, 98),
+student_a = StudentA("윤인성", 87, 98, 99, 95),
+student_b = StudentA("연하진", 92, 98, 96, 98),
 
 # print(students[3].name)
 # print(students[2].english)
@@ -66,12 +66,12 @@ class Test:
 
 test = Test("A")
 
-print(isinstance(student, Student))
-print(type(student) == Student)
+print(isinstance(student, StudentA))
+print(type(student) == StudentA)
 
 
 
-class Student:
+class StudentA:
     def study(self):
         print('공부를 합니다.')
 
@@ -79,10 +79,10 @@ class Teacher:
     def teach(self):
         print('가르칩니다.')
 
-classroom = [Student(), Student(), Teacher(), Student()]
+classroom = [StudentA(), StudentA(), Teacher(), StudentA()]
 
 for person in classroom:
-    if isinstance(person, Student):
+    if isinstance(person, StudentA):
         person.study()
     elif isinstance(person, Teacher):
         person.teach()

@@ -6,16 +6,13 @@ import cv2
 import csv
 import re
 
-class ClovaRecog:
+class ClovaRecogBound:
 
     def __init__(self, directory):
         self.directory = directory
         self.clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
         self.clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
-
-        # self.json_file_list = self.send_request_and_save()
         
-
     '''
     Name       : make_file_list()
     Desc       : 폴더 내 원하는 종류의 파일들의 list 생성
@@ -145,17 +142,64 @@ class ClovaRecog:
 
                 # 면허증
                 if '자동차운전면허증' in text:
-                    bounding_D = []
-                    y_range_D = []
+
+                    text_bound_D = {'text' : '', 'y_range' : ''}
+                    text_bound_D_text = []
+                    text_bound_D_y = []
                     
                     for m in range(len(list_fields)):
-                        bounding_D.append(list_fields[m].get('boundingPoly').get('vertices'))
+                        bounding_D = list_fields[m].get('boundingPoly').get('vertices')
+                        y_list = [bounding_D[0].get('y'), bounding_D[1].get('y'), bounding_D[2].get('y'), bounding_D[3].get('y')]
+                        
+                        text_bound_D_y.append([min(y_list), max(y_list)])
+                        text_bound_D_text.append(list_fields[m].get('inferText'))
 
-                        y_list = [bounding_D[m][0].get('y'), bounding_D[m][1].get('y'), bounding_D[m][2].get('y'), bounding_D[m][3].get('y')]
-                        y_range_D.append([min(y_list), max(y_list)])
+                    text_bound_D['text'] = text_bound_D_text
+                    text_bound_D['y_range'] = text_bound_D_y
 
-                        text_bound_D = [list_fields[m].get('inferText'), y_range_D[m]]
-                        # print(text_bound_D)
+                    bar_y_range = []
+                    dot_y_range = []
+                    for i in range(len(text_bound_D['text'])):
+                        if '-' in text_bound_D['text'][i]:
+                            bar_y_range.append(text_bound_D['y_range'][i])
+                        elif '.' in text_bound_D['text'][i]:
+                            dot_y_range.append(text_bound_D['y_range'][i])
+                    # print(bar_y_range[0][1])
+                    # print(dot_y_range[len(dot_y_range) - 1])
+
+                    name_line = []
+                    for j in range(len(text_bound_D['text'])):
+                        if text_bound_D['y_range'][j][0] >= bar_y_range[0][1] - 10 and text_bound_D['y_range'][j][1] <= bar_y_range[1][0] + 40:
+                            name_line.append(text_bound_D['text'][j])
+                    name_line = ''.join(name_line)
+                    name_line_split = name_line.split(":")
+                    # print(name_line_split)
+                    
+                    if len(name_line_split) == 1:
+                        name = re.compile('[가-힣]+').findall(name_line_split[0])
+                    elif len(name_line_split) > 1:
+                        name = re.compile('[가-힣]+').findall(name_line_split[1])
+                    # print(name[0])
+
+                    date_line = []
+                    for n in range(len(text_bound_D['text'])):
+                        if text_bound_D['y_range'][n][0] >= dot_y_range[len(dot_y_range) - 1][0] - 10 and\
+                            text_bound_D['y_range'][n][1] <= dot_y_range[len(dot_y_range) - 1][1] + 10:
+                            date_line.append(text_bound_D['text'][n])
+                    date_line = ''.join(date_line)
+                    date_line = date_line.replace('.', '')
+
+                    date = date_line[:4] + '.' + date_line[4:6] + '.' + date_line[6:] + '.'
+                    # print(date)
+
+                    lcnum_line = []
+                    for n in range(len(text_bound_D['text'])):
+                        if text_bound_D['y_range'][n][0] >= bar_y_range[0][0] - 10 and\
+                            text_bound_D['y_range'][n][1] <= bar_y_range[0][1] + 10:
+                            lcnum_line.append(text_bound_D['text'][n])
+                    lcnum = ' '.join(lcnum_line)
+                    print(lcnum)
+                    
                     
 
                 # 주민등록증
@@ -183,13 +227,14 @@ class ClovaRecog:
 
                     for i in range(len(text_bound_R['text'])):
                         if '.' in text_bound_R['text'][i]:
-                            print(text_bound_R['y_range'][i])
+                            pass
+                            # print(text_bound_R['y_range'][i])
                     
                     
                     
 
 
-recog = ClovaRecog('d:/id_card')
+recog = ClovaRecogBound('d:/id_card')
 
 # recog.send_request_and_save()
 recog.open_file_and_save_bound()
