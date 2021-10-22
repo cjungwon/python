@@ -6,7 +6,7 @@ _id_pw_list = {'id' : '', 'pw' : ''}
 _id_pw_list['id'] = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff' ,'ggg', 'hhh', 'iii', 'jjj']
 _id_pw_list['pw'] = ['111', '222', '333', '444', '555', '666' ,'777', '888', '999', '000']
 
-class Login(QWidget):
+class LoginTable(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -81,5 +81,5 @@ class Login(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    win = Login()
+    win = LoginTable()
     sys.exit(app.exec_())
