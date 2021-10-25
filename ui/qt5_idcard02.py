@@ -1,5 +1,5 @@
-import sys
-import os
+import sys, os
+sys.path.insert(1, 'D:/test/sort')
 import cv2
 import base64
 import requests
@@ -8,7 +8,8 @@ import re
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QLabel, QTextBrowser
 from PyQt5.QtGui import QImage, QPixmap
-from check.check_id_num import IDcardUtil
+from sorting import SortNum
+import numpy as np
 
 _clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
 _clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
@@ -19,6 +20,7 @@ class IDCard(QMainWindow):
         self.init_UI()
     
     def init_UI(self):
+
         btn_folder = QPushButton('폴더', self)
         btn_folder.clicked.connect(self.open_folder)
         btn_folder.setGeometry(20, 10, 80, 40)
@@ -31,26 +33,30 @@ class IDCard(QMainWindow):
         btn_result.clicked.connect(self.find_idcard_item)
         btn_result.setGeometry(200, 10, 80, 40)
 
+        btn_sort = QPushButton('정렬', self)
+        btn_sort.clicked.connect(self.sort_ybound)
+        btn_sort.setGeometry(290, 10, 80, 40)
+
         self.lbl_img = QLabel(self)
         self.lbl_img.move(20, 70)
-        self.lbl_img.resize(600, 600)
+        self.lbl_img.resize(700, 700)
         self.lbl_img.setStyleSheet("border : 2px black; border-style : solid;")
 
         self.result_item = QTextBrowser(self)
-        self.result_item.move(650, 350)
-        self.result_item.resize(250, 318)
+        self.result_item.move(750, 400)
+        self.result_item.resize(250, 360)
         self.result_item.setStyleSheet("border : 2px black; border-style : solid;")
 
         self.table_file = QTableWidget(10, 1, self)
-        self.table_file.resize(250, 250)
-        self.table_file.move(650, 70)
+        self.table_file.resize(250, 280)
+        self.table_file.move(750, 70)
         self.table_file.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_file.setHorizontalHeaderLabels(['File Name'])
         self.table_file.setColumnWidth(0, 200)
         self.table_file.cellClicked.connect(self.show_image)
 
         self.setWindowTitle('File')
-        self.setGeometry(200, 200, 950, 700)
+        self.setGeometry(300, 150, 1050, 800)
 
 #############################################################################################
 # Button Event  
@@ -73,7 +79,7 @@ class IDCard(QMainWindow):
         self.picked_image = self.folder + '/' + self.table_file.selectedItems()[0].text()
 
         pixmap = QPixmap(self.picked_image)
-        pixmap = pixmap.scaledToWidth(600)
+        pixmap = pixmap.scaledToWidth(700)
         self.lbl_img.setPixmap(pixmap)
     
     def recog_image_and_show_items(self):
@@ -102,7 +108,6 @@ class IDCard(QMainWindow):
             self.find_registration_card_item()
 
 #############################################################################################
-
 
 
     def request_clova_and_save_json(self):
@@ -161,16 +166,19 @@ class IDCard(QMainWindow):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         for m in range(len(self.list_fields)):
+            text = str(m+1)
             bounding = self.list_fields[m].get('boundingPoly').get('vertices')
             cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[1].get('x')), int(bounding[1].get('y'))), (255,0,0), 3)
             cv2.line(img, (int(bounding[1].get('x')), int(bounding[1].get('y'))), (int(bounding[2].get('x')), int(bounding[2].get('y'))), (255,0,0), 3)
             cv2.line(img, (int(bounding[2].get('x')), int(bounding[2].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
             cv2.line(img, (int(bounding[0].get('x')), int(bounding[0].get('y'))), (int(bounding[3].get('x')), int(bounding[3].get('y'))), (255,0,0), 3)
 
+            cv2.putText(img, text, (int(bounding[0].get('x')), int(bounding[0].get('y'))), cv2.FONT_HERSHEY_COMPLEX, 2, (0,0,255), 5 )
+
         qimage = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
 
         pixmap_res = QPixmap(qimage)
-        pixmap_res = pixmap_res.scaledToWidth(600)
+        pixmap_res = pixmap_res.scaledToWidth(700)
 
         self.lbl_img.setPixmap(pixmap_res)
         
@@ -178,22 +186,11 @@ class IDCard(QMainWindow):
     
     # 운전면허증 items
     def find_driver_license_item(self):
-        bar_index = []
-        dot_index = []
-
-        for m in range(len(self.list_fields)):
-            if '-' in self.list_fields[m].get('inferText'):
-                bar_index.append(m)
-            elif '.' in self.list_fields[m].get('inferText'):
-                dot_index.append(m)
-
-        id_num_list = re.findall("\d+", self.list_fields[bar_index[1]].get('inferText'))
-        id_num = id_num_list[0] + '-' + id_num_list[1]
 
         self.result_item.append(self.picked_image  + ' : 운전면허증')
         self.result_item.append('면허번호 : ' + self.find_driver_license_num())
         self.result_item.append('이름 : ' + self.find_driver_license_name())
-        self.result_item.append('주민등록번호 : ' + id_num)
+        self.result_item.append('주민등록번호 : ' + self.find_driver_license_idnum())
         self.result_item.append('발행일 : ' + self.find_driver_license_date())
         self.result_item.append('')
     
@@ -241,6 +238,20 @@ class IDCard(QMainWindow):
         
         return name[0]
 
+    # 운전면허증 - 주민번호
+    def find_driver_license_idnum(self):
+        
+        idnum_line = []
+        for n in range(len(self.bound_D_text)):
+            if self.bound_D_y[n][0] >= self.bar_y_range[1][0] - 10 and\
+                self.bound_D_y[n][1] <= self.bar_y_range[1][1] + 10:
+                idnum_line.append(self.bound_D_text[n])
+        idnum = ''.join(idnum_line)
+        idnum = re.findall(r'\d+', idnum)
+        idnum = '-'.join(idnum)
+
+        return idnum
+
     # 운전면허증 - 발행일
     def find_driver_license_date(self):
 
@@ -251,12 +262,13 @@ class IDCard(QMainWindow):
 
         date_line = []
         for n in range(len(self.bound_D_text)):
-            if self.bound_D_y[n][0] >= dot_y_range[len(dot_y_range) - 1][0] - 10 and\
-                self.bound_D_y[n][1] <= dot_y_range[len(dot_y_range) - 1][1] + 10:
+            if self.bound_D_y[n][0] >= dot_y_range[len(dot_y_range) - 1][0] - 30 and\
+                self.bound_D_y[n][1] <= dot_y_range[len(dot_y_range) - 1][1] + 30:
                 date_line.append(self.bound_D_text[n])
 
         date_line = ''.join(date_line)
-        date_line = date_line.replace('.', '')
+        date_line = re.findall(r'\d+', date_line)
+        date_line = ''.join(date_line)
         date = date_line[:4] + '.' + date_line[4:6] + '.' + date_line[6:] + '.'
 
         return date
@@ -289,10 +301,26 @@ class IDCard(QMainWindow):
         self.result_item.append('주민등록번호 : ' + id_num)
         self.result_item.append('발행일 : ' + issue_date)
         self.result_item.append('')
+
+    def sort_ybound(self):
+
+        self.bound_D_text = []
+        self.bound_D_y = []
+
+        for m in range(len(self.list_fields)):
+            bounding_D = self.list_fields[m].get('boundingPoly').get('vertices')
+            y_list = [bounding_D[0].get('y'), bounding_D[1].get('y'), bounding_D[2].get('y'), bounding_D[3].get('y')]
+
+            self.bound_D_y.append([min(y_list), max(y_list)])
+            self.bound_D_text.append(self.list_fields[m].get('inferText'))
         
+        sort_num = SortNum()
+        print(sort_num.selection_sort(self.bound_D_y))
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = IDCard()
     win.show()
     sys.exit(app.exec_())
+
