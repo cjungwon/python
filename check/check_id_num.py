@@ -204,18 +204,18 @@ class IDcardUtil:
             self.check_birthplace_num(input_num) == True and\
             self.check_year_and_gender_num(input_num) == True and\
             self.check_last_num(input_num) == True:
-            print('주민번호 O')
+            return True
         else:
-            print('주민번호 X')
+            return False
         
 
 
 
-input_num = input("번호 입력: ")
+# input_num = input("번호 입력: ")
 
-check = IDcardUtil()
+# check = IDcardUtil()
 
-check.result(input_num)
+# check.result(input_num)
 
 # print(check.check_date_format(input_num))
 
