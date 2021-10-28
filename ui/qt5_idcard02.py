@@ -7,11 +7,12 @@ import requests
 import json
 import re
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QLabel, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QSizePolicy, QTableWidget, QAbstractItemView, QTableWidgetItem, QLabel, QTextBrowser
 from PyQt5.QtGui import QImage, QPixmap
 from sorting import SortNum
 from check_id_num import IDcardUtil
 import math
+import numpy as np
 
 _clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
 _clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
@@ -25,39 +26,60 @@ class IDCard(QMainWindow):
 
         btn_folder = QPushButton('폴더', self)
         btn_folder.clicked.connect(self.open_folder)
-        btn_folder.setGeometry(20, 10, 80, 40)
+        btn_folder.setGeometry(20, 10, 50, 40)
+        btn_folder.setToolTip('폴더 선택')
 
         btn_recog = QPushButton('인식', self)
         btn_recog.clicked.connect(self.recog_image_and_show_items)
-        btn_recog.setGeometry(110, 10, 80, 40)
+        btn_recog.setGeometry(80, 10, 50, 40)
+        btn_recog.setToolTip('이미지 파일 인식 후 \n 모든 text 위치 표시')
 
         btn_result = QPushButton('결과', self)
         btn_result.clicked.connect(self.find_idcard_item)
-        btn_result.setGeometry(200, 10, 80, 40)
-
-        btn_sort = QPushButton('정렬', self)
-        btn_sort.clicked.connect(self.sort_ybound)
-        btn_sort.setGeometry(290, 10, 80, 40)
+        btn_result.setGeometry(140, 10, 50, 40)
+        btn_result.setToolTip('필요한 text만 출력')
 
         btn_line = QPushButton('합치기', self)
         btn_line.clicked.connect(self.show_merge_result)
-        btn_line.setGeometry(380, 10, 80, 40)
+        btn_line.setGeometry(200, 10, 50, 40)
+        btn_line.setToolTip('line별로 text 합친 후 출력')
 
         btn_angle = QPushButton('각도', self)
         btn_angle.clicked.connect(self.check_angle)
-        btn_angle.setGeometry(470, 10, 80, 40)
+        btn_angle.setGeometry(260, 10, 50, 40)
+        btn_angle.setToolTip('기울어진 text 제거')
+
+        btn_blur = QPushButton('Blur', self)
+        btn_blur.clicked.connect(self.blur)
+        btn_blur.setGeometry(450, 10, 50, 40)
+
+        btn_thresh = QPushButton('Threshold', self)
+        btn_thresh.clicked.connect(self.thresholding)
+        btn_thresh.setGeometry(510, 10, 70, 40)
+
+        btn_ad_thresh = QPushButton('Adaptive \n Threshold', self)
+        btn_ad_thresh.clicked.connect(self.adaptive_threshold)
+        btn_ad_thresh.setGeometry(590, 10, 70, 40)
+
+        btn_hough = QPushButton('Line \n detect', self)
+        btn_hough.clicked.connect(self.hough_line)
+        btn_hough.setGeometry(670, 10, 50, 40)
+
+        btn_edge = QPushButton('Edge \n Detection', self)
+        btn_edge.clicked.connect(self.edge_detection)
+        btn_edge.setGeometry(730, 10, 70, 40)
 
         btn_reset = QPushButton('Reset', self)
         btn_reset.clicked.connect(self.reset)
-        btn_reset.setGeometry(910, 10, 80, 40)
+        btn_reset.setGeometry(910, 10, 50, 40)
 
         self.lbl_img = QLabel(self)
-        self.lbl_img.move(20, 70)
+        self.lbl_img.move(20, 60)
         self.lbl_img.resize(700, 700)
         self.lbl_img.setStyleSheet("border : 2px black; border-style : solid;")
 
         self.merge_result = QTextBrowser(self)
-        self.merge_result.move(750, 310)
+        self.merge_result.move(750, 305)
         self.merge_result.resize(250, 220)
         self.merge_result.setStyleSheet("border : 2px black; border-style : solid;")
 
@@ -68,7 +90,7 @@ class IDCard(QMainWindow):
 
         self.table_file = QTableWidget(10, 1, self)
         self.table_file.resize(250, 230)
-        self.table_file.move(750, 70)
+        self.table_file.move(750, 60)
         self.table_file.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_file.setHorizontalHeaderLabels(['File Name'])
         self.table_file.setColumnWidth(0, 200)
@@ -203,6 +225,90 @@ class IDCard(QMainWindow):
     def reset(self):
         self.merge_result.clear()
         self.result_item.clear()
+
+
+    def blur(self):
+    
+        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+
+        blur = cv2.medianBlur(img, 21)
+
+        blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2RGB)
+        qimage = QImage(blur.data, blur.shape[1], blur.shape[0], QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimage)
+        pixmap = pixmap.scaledToWidth(700)
+        self.lbl_img.setPixmap(pixmap)
+        
+        cv2.destroyAllWindows()
+
+    def thresholding(self):
+        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+
+        ret, thresh = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)
+
+        thresh = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+        qimage = QImage(thresh.data, thresh.shape[1], thresh.shape[0], QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimage)
+        pixmap = pixmap.scaledToWidth(700)
+        self.lbl_img.setPixmap(pixmap)
+        
+        cv2.destroyAllWindows()
+
+    def adaptive_threshold(self):
+
+        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+        blur = cv2.medianBlur(img, 13)
+
+        thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        thresh = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+        qimage = QImage(thresh.data, thresh.shape[1], thresh.shape[0], QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimage)
+        pixmap = pixmap.scaledToWidth(700)
+        self.lbl_img.setPixmap(pixmap)
+
+        cv2.destroyAllWindows()
+
+    def hough_line(self):
+    
+        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
+        edges = cv2.Canny(img, 50, 200, apertureSize=3)
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, 200, minLineLength=150, maxLineGap=10)
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            
+            cv2.line(img, (x1, y1), (x2, y2), (0,255,0), 5)
+        
+        qimage = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimage)
+        pixmap = pixmap.scaledToWidth(700)
+        self.lbl_img.setPixmap(pixmap)
+        
+        cv2.destroyAllWindows()
+
+    def edge_detection(self):
+
+        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+
+        edges = cv2.Canny(img, 100, 200)
+
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+        qimage = QImage(edges.data, edges.shape[1], edges.shape[0], QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimage)
+        pixmap = pixmap.scaledToWidth(700)
+        self.lbl_img.setPixmap(pixmap)
+
+        cv2.destroyAllWindows()
+
+
+    
 
 
 #############################################################################################
@@ -486,6 +592,9 @@ class IDCard(QMainWindow):
             merged_bound.append(line_bound)
         
         return merged_text, merged_bound
+
+    
+
 
 
 if __name__ == '__main__':

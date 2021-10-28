@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-img1 = cv2.imread('D:/image/opencv_logo.png')
-img2 = cv2.imread('D:/image/robot.png')
-img3 = cv2.imread('D:/image/messi.png')
+# img1 = cv2.imread('D:/image/opencv_logo.png')
+# img2 = cv2.imread('D:/image/robot.png')
+# img3 = cv2.imread('D:/image/messi.png')
 
 ########################################
 # making borders
@@ -84,23 +84,23 @@ img3 = cv2.imread('D:/image/messi.png')
 ########################################
 # adaptive thresholding
 
-# img = cv2.imread('D:/image/sudoku.png', 0)
-# img = cv2.medianBlur(img, 5)
+img = cv2.imread('D:/image/sudoku.png', 0)
+img = cv2.medianBlur(img, 5)
 
-# ret, th1 = cv2.threshold(img, 127,255, cv2.THRESH_BINARY)
-# th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
-# th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+ret, th1 = cv2.threshold(img, 127,255, cv2.THRESH_BINARY)
+th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
-# titles = ['original', 'global thresholding (v=127)', 'adaptive mean thresholding', 'adaptive gaussian thresholding']
+titles = ['original', 'global thresholding (v=127)', 'adaptive mean thresholding', 'adaptive gaussian thresholding']
 
-# images = [img, th1, th2, th3]
+images = [img, th1, th2, th3]
 
-# for i in range(4):
-#     plt.subplot(2,2,i+1), plt.imshow(images[i], 'gray')
-#     plt.title(titles[i])
-#     plt.xticks([]), plt.yticks([])
+for i in range(4):
+    plt.subplot(2,2,i+1), plt.imshow(images[i], 'gray')
+    plt.title(titles[i])
+    plt.xticks([]), plt.yticks([])
 
-# plt.show()
+plt.show()
 
 
 ########################################
@@ -141,6 +141,23 @@ img3 = cv2.imread('D:/image/messi.png')
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
+
+########################################
+# perspective transformation
+
+# img = cv2.imread('D:/image/sudoku.png')
+# row, cols, ch = img.shape
+
+# pts1 = np.float32([ [48, 56], [330, 44], [20, 349], [350, 346] ])
+# pts2 = np.float32([ [0, 0], [300, 0], [0, 300], [300, 300] ])
+
+# M = cv2.getPerspectiveTransform(pts1, pts2)
+
+# dst = cv2.warpPerspective(img, M, (300, 300))
+
+# plt.subplot(1,2,1), plt.imshow(img), plt.title('input')
+# plt.subplot(1,2,2), plt.imshow(dst), plt.title('output')
+# plt.show()
 
 ########################################
 # smoothing images
@@ -228,15 +245,135 @@ img3 = cv2.imread('D:/image/messi.png')
 
 ########################################
 # contours
-# p.92-93
 
-im = cv2.imread('D:/image/noisy.png')
-imgray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-ret, thresh = cv2.threshold(imgray, 127, 255, 0)
-image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+# im = cv2.imread('D:/image/noisy.png')
+# imgray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+# ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+# contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-img = cv2.drawContours(im, contours, -1, (0,255,0), 3)
+# img = cv2.drawContours(im, contours, -1, (0,0,255), 3)
 
-plt.subplot(1,1,1), plt.imshow(img)
-plt.title('original'), plt.xticks([]), plt.yticks([])
-plt.show()
+# plt.subplot(1,1,1), plt.imshow(img)
+# plt.title('original'), plt.xticks([]), plt.yticks([])
+# plt.show()
+
+
+########################################
+# template matching
+
+# img = cv2.imread('D:/image/messi.png', 0)
+# img2 = img.copy()
+# template = cv2.imread('D:/image/messi_face.png', 0)
+
+# w, h = template.shape[::-1]
+
+# methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR', 'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+
+# for meth in methods:
+#     img = img2.copy()
+#     method = eval(meth)
+
+#     res = cv2.matchTemplate(img, template, method)
+#     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+#     if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+#         top_left = min_loc
+#     else:
+#         top_left = max_loc
+    
+#     bottom_right = (top_left[0] + w, top_left[1] + h)
+
+#     cv2.rectangle(img, top_left, bottom_right, 255, 2)
+
+#     plt.subplot(1,2,1), plt.imshow(res, cmap='gray')
+#     plt.title('matching result'), plt.xticks([]), plt.yticks([])
+#     plt.subplot(1,2,2), plt.imshow(img, cmap='gray')
+#     plt.title('detected point'), plt.xticks([]), plt.yticks([])
+#     plt.suptitle(meth)
+
+#     plt.show()
+
+
+########################################
+# template matching with multiple objects
+
+# img_rgb = cv2.imread('D:/image/mario.png')
+# img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+# template = cv2.imread('D:/image/mario_coin.png', 0)
+# w, h = template.shape[::-1]
+
+# res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
+# threshold = 0.8
+
+# loc = np.where(res >= threshold)
+# for pt in zip(*loc[::-1]):
+#     cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0,0,255), 2)
+
+# cv2.imshow('res', img_rgb)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+
+########################################
+# hough transform
+
+# img = cv2.imread('D:/image/sudoku.png')
+# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+
+# lines = cv2.HoughLines(edges, 1, np.pi/180, 150)
+# for line in lines:
+#     rho, theta = line[0]
+#     a = np.cos(theta)
+#     b = np.sin(theta)
+#     x0 = a * rho
+#     y0 = b * rho
+#     x1 = int(x0 + 1000 * (-b))
+#     y1 = int(y0 + 1000 * (a))
+#     x2 = int(x0 - 1000 * (-b))
+#     y2 = int(y0 - 1000 * (a))
+
+#     cv2.line(img, (x1, y1), (x2, y2), (0,0,255), 2)
+
+# cv2.imshow('edges', edges)
+# cv2.imshow('houghlines', img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+
+########################################
+# probabilistic hough transform
+
+# img = cv2.imread('D:/image/sudoku.png')
+# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+# minLineLength = 100
+# maxLineGap = 10
+
+# lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength, maxLineGap)
+# for line in lines:
+#     x1, y1, x2, y2 = line[0]
+#     cv2.line(img, (x1, y1), (x2, y2), (0,255,0), 2)
+
+# cv2.imshow('houghline', img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+
+########################################
+# hough circle transform
+
+# img = cv2.imread('D:/image/opencv_logo.png', 0)
+# img = cv2.medianBlur(img, 5)
+# cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+# circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 50, param1=50, param2=30, minRadius=0, maxRadius=0)
+
+# circles = np.uint16(np.around(circles))
+# for i in circles[0, :]:
+#     cv2.circle(cimg, (i[0], i[1]), i[2], (0,255,0), 2)
+#     cv2.circle(cimg, (i[0], i[1]), 3, (0,0,255), 3)
+
+# cv2.imshow('detected circles', cimg)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
