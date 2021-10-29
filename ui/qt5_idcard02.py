@@ -1,4 +1,5 @@
 import sys, os
+from PyQt5 import QtWidgets
 sys.path.insert(1, 'D:/test/sort')
 sys.path.insert(1, 'D:/test/check')
 import cv2
@@ -7,12 +8,13 @@ import requests
 import json
 import re
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QSizePolicy, QTableWidget, QAbstractItemView, QTableWidgetItem, QLabel, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QGridLayout, QMainWindow, QPushButton, QFileDialog, QSizePolicy, QTableWidget, QAbstractItemView, QTableWidgetItem, QLabel, QTextBrowser, QWidget
 from PyQt5.QtGui import QImage, QPixmap
 from sorting import SortNum
 from check_id_num import IDcardUtil
 import math
 import numpy as np
+from PIL import ImageQt
 
 _clova_URL = 'https://c56ee27ada0e4510bd40083285fd9382.apigw.ntruss.com/custom/v1/11509/d447f9082390144fb40087fa8850a5635871c863250e01dcf55789f4090fcb55/general'
 _clova_secret_key = 'VUVnY0tlcExkWVFHUHlxSkpPVkloVkx3SkVtcFpTbE4='
@@ -33,7 +35,7 @@ class IDCard(QMainWindow):
         btn_recog.clicked.connect(self.recog_image_and_show_items)
         btn_recog.setGeometry(80, 10, 50, 40)
         btn_recog.setToolTip('이미지 파일 인식 후 \n 모든 text 위치 표시')
-
+        
         btn_result = QPushButton('결과', self)
         btn_result.clicked.connect(self.find_idcard_item)
         btn_result.setGeometry(140, 10, 50, 40)
@@ -80,27 +82,29 @@ class IDCard(QMainWindow):
 
         self.merge_result = QTextBrowser(self)
         self.merge_result.move(750, 305)
-        self.merge_result.resize(250, 220)
+        self.merge_result.resize(300, 220)
         self.merge_result.setStyleSheet("border : 2px black; border-style : solid;")
 
         self.result_item = QTextBrowser(self)
         self.result_item.move(750, 545)
-        self.result_item.resize(250, 220)
+        self.result_item.resize(300, 220)
         self.result_item.setStyleSheet("border : 2px black; border-style : solid;")
 
-        self.table_file = QTableWidget(10, 1, self)
-        self.table_file.resize(250, 230)
+        self.table_file = QTableWidget(0, 1, self)
+        self.table_file.resize(300, 230)
         self.table_file.move(750, 60)
         self.table_file.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_file.setHorizontalHeaderLabels(['File Name'])
         self.table_file.setColumnWidth(0, 200)
         self.table_file.cellClicked.connect(self.show_image)
+        # self.table_file.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        # self.table_file.resizeColumnsToContents()
 
         self.check_idnum = IDcardUtil()
 
         self.setWindowTitle('File')
-        self.setGeometry(300, 150, 1050, 800)
-
+        self.setGeometry(200, 50, 1150, 950)
+        
 #############################################################################################
 # Button Event  
 
@@ -114,16 +118,29 @@ class IDCard(QMainWindow):
         for n in range(len(self.file_all_type)):
             if 'png' in self.file_all_type[n]:
                 self.img_file_list.append(self.file_all_type[n])
-        
+            elif 'jpg' in self.file_all_type[n]:
+                self.img_file_list.append(self.file_all_type[n])
+
+        self.table_file.clear()
+        self.table_file.setRowCount(0)
+        self.table_file.setColumnCount(1)
+        self.table_file.setHorizontalHeaderLabels(['File Name'])
+
         for i in range(len(self.img_file_list)):
+            self.table_file.insertRow(self.table_file.rowCount())
             self.table_file.setItem(i, 0, QTableWidgetItem(self.img_file_list[i]))
+
+        self.table_file.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.table_file.resizeColumnsToContents()
         
     def show_image(self):
         self.picked_image = self.folder + '/' + self.table_file.selectedItems()[0].text()
 
         pixmap = QPixmap(self.picked_image)
-        pixmap = pixmap.scaledToWidth(700)
+        pixmap = pixmap.scaledToWidth(600)
         self.lbl_img.setPixmap(pixmap)
+        self.lbl_img.setContentsMargins(10,10,10,10)
+        self.lbl_img.resize(pixmap.width(), pixmap.height())
     
     def recog_image_and_show_items(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -225,11 +242,14 @@ class IDCard(QMainWindow):
     def reset(self):
         self.merge_result.clear()
         self.result_item.clear()
-
+        self.lbl_img.clear()
 
     def blur(self):
-    
-        img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
+        img = ImageQt.fromqpixmap(self.lbl_img.pixmap())
+        print(img)
+        
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        # img = cv2.imread(self.picked_image, cv2.IMREAD_GRAYSCALE)
 
         blur = cv2.medianBlur(img, 21)
 
@@ -239,7 +259,6 @@ class IDCard(QMainWindow):
         pixmap = QPixmap(qimage)
         pixmap = pixmap.scaledToWidth(700)
         self.lbl_img.setPixmap(pixmap)
-        
         cv2.destroyAllWindows()
 
     def thresholding(self):
